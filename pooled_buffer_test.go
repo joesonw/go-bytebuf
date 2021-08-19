@@ -32,6 +32,19 @@ func TestPooledBuffer(t *testing.T) {
 	assert.EqualValues(t, 1, stat.Count())
 	assert.EqualValues(t, 2, stat.Pages())
 
+	buf.Reset()
+	assert.EqualValues(t, 0, buf.Len())
+	assert.EqualValues(t, 16, buf.Cap())
+
+	assert.Nil(t, buf.WriteBytes(make([]byte, 11)))
+	assert.EqualValues(t, 11, buf.Len())
+	assert.EqualValues(t, 16, buf.Cap())
+
+	assert.Nil(t, buf.ReadBytes(make([]byte, 9)))
+	buf.Truncate()
+	assert.EqualValues(t, 2, buf.Len())
+	assert.EqualValues(t, 8, buf.Cap())
+
 	buf.Release()
 	stat = allocator.Stat().(*PooledAllocatorStat)
 	assert.EqualValues(t, 0, stat.Memory())

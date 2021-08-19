@@ -3,6 +3,7 @@ package go_bytebuf
 type Buffer interface {
 	Instrument() Instrument
 	Release()
+	Reset()
 
 	Bytes() []byte
 	Cap() int
@@ -55,6 +56,11 @@ type wrappedBuffer struct {
 
 func (b *wrappedBuffer) Instrument() Instrument {
 	return b.instrument
+}
+
+func (b *wrappedBuffer) Reset() {
+	b.readerIndex = 0
+	b.writerIndex = 0
 }
 
 func (b *wrappedBuffer) ReaderIndex() int {
@@ -129,6 +135,7 @@ func (b *wrappedBuffer) Resize(newCapacity int) {
 
 func (b *wrappedBuffer) Truncate() {
 	b.instrument.discard(b.readerIndex)
+	b.writerIndex -= b.readerIndex
 	b.readerIndex = 0
 }
 

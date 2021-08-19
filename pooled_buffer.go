@@ -26,14 +26,16 @@ func (b *pooledBuffer) get(index int, p []byte) error {
 
 	targetIndex := b.allocator.pageSize - bottomIndex
 	// copy first page
+	size -= b.allocator.pageSize - bottomIndex
 	copy(p, b.pages[page][bottomIndex:])
 	// copy pages in-between
 	for page = startPage + 1; page < endPage; page++ {
 		copy(p[targetIndex:], b.pages[page])
+		size -= b.allocator.pageSize
 		targetIndex += b.allocator.pageSize
 	}
 	// copy last page
-	copy(p[targetIndex:], b.pages[page][:size-(page-1)%b.allocator.pageSize])
+	copy(p[targetIndex:], b.pages[page][:size])
 	return nil
 }
 
@@ -55,23 +57,28 @@ func (b *pooledBuffer) set(index int, p []byte) error {
 	}
 
 	targetIndex := b.allocator.pageSize - bottomIndex
+	size -= b.allocator.pageSize - bottomIndex
 	// copy first page
 	copy(b.pages[page][bottomIndex:], p[:b.allocator.pageSize-bottomIndex])
 	// copy pages in-between
 	for page = startPage + 1; page < endPage; page++ {
 		copy(b.pages[page], p[targetIndex:targetIndex+b.allocator.pageSize])
+		size -= b.allocator.pageSize
 		targetIndex += b.allocator.pageSize
 	}
-	println(size, page, b.allocator.pageSize)
 	// copy last page
-	copy(b.pages[page][:size-(page-1)%b.allocator.pageSize], p[targetIndex:])
+	copy(b.pages[page][:size], p[targetIndex:])
 	return nil
 }
 
 func (b *pooledBuffer) discard(size int) {
 	realSize := size + b.discardedIndex
-	discardPages := realSize / b.allocator.pageSize
-	b.pages = b.pages[discardPages:]
+	discardPageSize := realSize / b.allocator.pageSize
+	discardPages := b.pages[:discardPageSize]
+	for _, page := range discardPages {
+		b.allocator.release(page)
+	}
+	b.pages = b.pages[discardPageSize:]
 	b.discardedIndex = realSize % b.allocator.pageSize
 }
 
