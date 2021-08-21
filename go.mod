@@ -1,4 +1,4 @@
-module github.com/joesonw/bytebuf
+module github.com/joesonw/go-bytebuf
 
 go 1.16
 
