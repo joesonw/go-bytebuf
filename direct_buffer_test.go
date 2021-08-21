@@ -1,6 +1,7 @@
 package go_bytebuf
 
 import (
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,23 +12,35 @@ func TestDirectBuffer(t *testing.T) {
 		return newCapacity
 	}))
 
-	buf := allocator.Allocate(16)
-	assert.Nil(t, buf.WriteString("abcdefg"))
-	assert.EqualValues(t, 7, buf.Len())
-	assert.EqualValues(t, 16, buf.Cap())
+	buf := allocator.Allocate(8).Instrument().(*directBuffer)
+	tAssertStat(t, allocator.Stat(), 1, 8)
+	assert.EqualValues(t, buf.capacity(), 8)
+	tAssertGet(t, buf, 0, make([]byte, 10), 8, io.EOF)
 
-	s, err := buf.ReadString(2)
-	assert.Nil(t, err)
-	assert.EqualValues(t, "ab", s)
-	assert.EqualValues(t, 5, buf.Len())
-	assert.EqualValues(t, 16, buf.Cap())
+	tAssertSetOk(t, buf, 0, tRangeByteArray(1, 9), 8)
+	tAssertStat(t, allocator.Stat(), 1, 8)
+	assert.EqualValues(t, buf.capacity(), 8)
+	tAssertGet(t, buf, 0, []byte{1, 2, 3, 4, 5, 6, 7, 8, 0, 0}, 8, io.EOF)
 
-	stat := allocator.Stat()
-	assert.EqualValues(t, 16, stat.Memory())
-	assert.EqualValues(t, 1, stat.Count())
+	tAssertSetOk(t, buf, 8, []byte{9, 10}, 2)
+	tAssertStat(t, allocator.Stat(), 1, 10)
+	assert.EqualValues(t, buf.capacity(), 10)
+	tAssertGetOk(t, buf, 0, []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, 10)
 
-	buf.Release()
-	stat = allocator.Stat()
-	assert.EqualValues(t, 0, stat.Memory())
-	assert.EqualValues(t, 0, stat.Count())
+	buf2 := buf.clone()
+	tAssertStat(t, allocator.Stat(), 2, 20)
+	assert.EqualValues(t, buf2.capacity(), 10)
+
+	buf.discard(2)
+	tAssertStat(t, allocator.Stat(), 2, 20)
+	assert.EqualValues(t, buf.capacity(), 10)
+	tAssertGetOk(t, buf, 0, []byte{3, 4, 5, 6, 7, 8, 9, 10, 9, 10}, 10)
+
+	buf.release()
+	assert.True(t, buf.released)
+	tAssertStat(t, allocator.Stat(), 1, 10)
+	tAssertGetOk(t, buf2, 0, []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, 10)
+
+	buf2.release()
+	tAssertStat(t, allocator.Stat(), 0, 0)
 }

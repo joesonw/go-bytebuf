@@ -1,13 +1,11 @@
 package go_bytebuf
 
 import (
-	"bytes"
 	"errors"
-	"io"
 )
 
 var (
-	ErrNotEnoughBytes     = io.EOF
-	ErrNotEnoughSpace     = bytes.ErrTooLarge
 	ErrBufferTypeNotMatch = errors.New("target buffer type is not desired")
+	ErrInvalidLengthWrote = errors.New("wrote invalid length")
+	ErrBufferReleased     = errors.New("buffer is already released")
 )

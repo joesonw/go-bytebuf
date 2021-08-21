@@ -68,8 +68,8 @@ func (a *pooledAllocator) release(page pooledBufferPage) {
 func (a *pooledAllocator) clone(b *pooledBuffer) *pooledBuffer {
 	pages := make([]pooledBufferPage, len(b.pages))
 	for i := range pages {
-		page := b.allocator.newPage()
-		copy(page, b.pages[i])
+		pages[i] = b.allocator.newPage()
+		copy(pages[i], b.pages[i])
 	}
 
 	instrument := &pooledBuffer{

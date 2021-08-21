@@ -1,38 +1,59 @@
 package go_bytebuf
 
+import (
+	"io"
+)
+
 type directBuffer struct {
 	allocator *directAllocator
 	released  bool
 	memory    []byte
 }
 
-func (b *directBuffer) get(index int, p []byte) error {
-	n := len(p)
-	if n+index > len(b.memory) {
-		return ErrNotEnoughBytes
+func (b *directBuffer) get(index int, p []byte) (n int, err error) {
+	if b.released {
+		panic(ErrBufferReleased)
+	}
+	n = len(p)
+	capacity := b.capacity()
+	if n+index > capacity {
+		n = capacity - index
+		err = io.EOF
 	}
 	copy(p, b.memory[index:index+n])
-	return nil
+	return
 }
 
-func (b *directBuffer) set(index int, p []byte) error {
-	size := len(p)
-	if size+index > len(b.memory) {
-		return ErrNotEnoughSpace
+func (b *directBuffer) set(index int, p []byte) (n int, err error) {
+	if b.released {
+		panic(ErrBufferReleased)
 	}
-	copy(b.memory[index:index+size], p)
-	return nil
+	n = len(p)
+	if n+index > len(b.memory) {
+		b.growTo(n + index)
+	}
+	copy(b.memory[index:index+n], p)
+	return
 }
 
 func (b *directBuffer) discard(size int) {
+	if b.released {
+		panic(ErrBufferReleased)
+	}
 	copy(b.memory, b.memory[size:])
 }
 
 func (b *directBuffer) capacity() int {
+	if b.released {
+		panic(ErrBufferReleased)
+	}
 	return len(b.memory)
 }
 
-func (b *directBuffer) resize(newCapacity int) {
+func (b *directBuffer) growTo(newCapacity int) {
+	if b.released {
+		panic(ErrBufferReleased)
+	}
 	capacity := b.capacity()
 	if newCapacity <= capacity {
 		return
@@ -43,10 +64,20 @@ func (b *directBuffer) resize(newCapacity int) {
 	b.memory = newMemory
 }
 
+func (b *directBuffer) bytes() []byte {
+	return b.memory[:]
+}
+
 func (b *directBuffer) release() {
+	if b.released {
+		panic(ErrBufferReleased)
+	}
 	_ = b.allocator.Release(b)
 }
 
 func (b *directBuffer) clone() Instrument {
+	if b.released {
+		panic(ErrBufferReleased)
+	}
 	return b.allocator.clone(b)
 }
