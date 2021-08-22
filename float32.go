@@ -5,9 +5,9 @@ import (
 	"math"
 )
 
-var _ float32Buffer = (*wrappedBuffer)(nil)
+var _ Float32Buffer = (*wrappedBuffer)(nil)
 
-type float32Buffer interface {
+type Float32Buffer interface {
 	ReadFloat32() (float32, error)
 	ReadFloat32LE() (float32, error)
 	WriteFloat32(v float32) error

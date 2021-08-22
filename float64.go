@@ -5,9 +5,9 @@ import (
 	"math"
 )
 
-var _ float64Buffer = (*wrappedBuffer)(nil)
+var _ Float64Buffer = (*wrappedBuffer)(nil)
 
-type float64Buffer interface {
+type Float64Buffer interface {
 	ReadFloat64() (float64, error)
 	ReadFloat64LE() (float64, error)
 	WriteFloat64(v float64) error

@@ -58,14 +58,14 @@ type Buffer interface {
 	GetByte(index int) (byte, error)
 	SetByte(index int, b byte) error
 
-	int16Buffer
-	uint16Buffer
-	int32Buffer
-	uint32Buffer
-	int64Buffer
-	uint64Buffer
-	float32Buffer
-	float64Buffer
+	Int16Buffer
+	Uint16Buffer
+	Int32Buffer
+	Uint32Buffer
+	Int64Buffer
+	Uint64Buffer
+	Float32Buffer
+	Float64Buffer
 }
 
 type Instrument interface {

@@ -4,9 +4,9 @@ import (
 	"encoding/binary"
 )
 
-var _ int16Buffer = (*wrappedBuffer)(nil)
+var _ Int16Buffer = (*wrappedBuffer)(nil)
 
-type int16Buffer interface {
+type Int16Buffer interface {
 	ReadInt16() (int16, error)
 	ReadInt16LE() (int16, error)
 	WriteInt16(v int16) error

@@ -4,9 +4,9 @@ import (
 	"encoding/binary"
 )
 
-var _ uint64Buffer = (*wrappedBuffer)(nil)
+var _ Uint64Buffer = (*wrappedBuffer)(nil)
 
-type uint64Buffer interface {
+type Uint64Buffer interface {
 	ReadUint64() (uint64, error)
 	ReadUint64LE() (uint64, error)
 	WriteUint64(v uint64) error

@@ -4,9 +4,9 @@ import (
 	"encoding/binary"
 )
 
-var _ int32Buffer = (*wrappedBuffer)(nil)
+var _ Int32Buffer = (*wrappedBuffer)(nil)
 
-type int32Buffer interface {
+type Int32Buffer interface {
 	ReadInt32() (int32, error)
 	ReadInt32LE() (int32, error)
 	WriteInt32(v int32) error
