@@ -10,21 +10,36 @@ type Buffer interface {
 	// Instrument get the underlying instrument
 	Instrument() Instrument
 
+	// Clear clear marked indexes
 	Clear()
+	// Release release underlying instrument, this buffer can no longer be used
 	Release()
+	// Reset reset the buffer to its full capacity, means length = 0
 	Reset()
+	// Clone clone an entire new buffer, with the same instrument implementation (different instance)
 	Clone() Buffer
+	// Cap returns current instrument allocated capacity
 	Cap() int
+	// Len current readable number of bytes
 	Len() int
+	// Grow grow capacity with at least this much more to write
 	Grow(size int)
+	// Ensure at least this much capacity
+	Ensure(capacity int)
+	// DiscardReadBytes discard already read bytes, this will reset marks and indexes
 	DiscardReadBytes()
+	// Bytes return all readable bytes
 	Bytes() []byte
+	// UnsafeBytes return all underlying bytes, this may contain discarded bytes
 	UnsafeBytes() []byte
+	// String return all readable as string
 	String() string
 
+	// ReaderIndex current reader index in memory
 	ReaderIndex() int
 	MarkReaderIndex()
 	ResetReaderIndex()
+	// WriterIndex current writer index in memory
 	WriterIndex() int
 	MarkWriterIndex()
 	ResetWriterIndex()
@@ -36,7 +51,21 @@ type Buffer interface {
 	ReadFrom(r io.Reader) (int64, error)
 	WriteTo(w io.Writer) (n int64, err error)
 
-	bufferHelper
+	ReadString(n int) (string, error)
+	WriteString(s string) (int, error)
+	ReadByte() (byte, error)
+	WriteByte(b byte) error
+	GetByte(index int) (byte, error)
+	SetByte(index int, b byte) error
+
+	int16Buffer
+	uint16Buffer
+	int32Buffer
+	uint32Buffer
+	int64Buffer
+	uint64Buffer
+	float32Buffer
+	float64Buffer
 }
 
 type Instrument interface {
@@ -48,6 +77,13 @@ type Instrument interface {
 	clone() Instrument
 	bytes() []byte
 	release()
+}
+
+type basicBuffer interface {
+	Read(p []byte) (int, error)
+	Write(p []byte) (int, error)
+	Get(index int, p []byte) (int, error)
+	Set(index int, p []byte) (int, error)
 }
 
 type wrappedBuffer struct {
@@ -95,9 +131,12 @@ func (b *wrappedBuffer) Len() int {
 }
 
 func (b *wrappedBuffer) Grow(size int) {
-	capacity := b.instrument.capacity()
-	if (b.markedWriterIndex + size) > capacity {
-		b.instrument.growTo(b.markedWriterIndex + size)
+	b.instrument.growTo(b.instrument.capacity() + size)
+}
+
+func (b *wrappedBuffer) Ensure(capacity int) {
+	if capacity > b.instrument.capacity() {
+		b.instrument.growTo(capacity)
 	}
 }
 
@@ -105,6 +144,8 @@ func (b *wrappedBuffer) DiscardReadBytes() {
 	b.instrument.discard(b.readerIndex)
 	b.writerIndex -= b.readerIndex
 	b.readerIndex = 0
+	b.markedWriterIndex = b.writerIndex
+	b.markedReaderIndex = 0
 }
 
 func (b *wrappedBuffer) Bytes() []byte {
@@ -208,4 +249,36 @@ func (b *wrappedBuffer) WriteTo(w io.Writer) (n int64, err error) {
 	}
 	b.Reset()
 	return n, nil
+}
+
+func (b *wrappedBuffer) ReadString(n int) (string, error) {
+	p := make([]byte, n)
+	m, err := b.Read(p)
+	return string(p[:m]), err
+}
+
+func (b *wrappedBuffer) WriteString(s string) (int, error) {
+	return b.Write([]byte(s))
+}
+
+func (b *wrappedBuffer) ReadByte() (byte, error) {
+	p := make([]byte, 1)
+	_, err := b.Read(p)
+	return p[0], err
+}
+
+func (b *wrappedBuffer) WriteByte(b2 byte) error {
+	_, err := b.Write([]byte{b2})
+	return err
+}
+
+func (b *wrappedBuffer) GetByte(index int) (byte, error) {
+	p := make([]byte, 1)
+	_, err := b.Get(index, p)
+	return p[0], err
+}
+
+func (b *wrappedBuffer) SetByte(index int, b2 byte) error {
+	_, err := b.Set(index, []byte{b2})
+	return err
 }
