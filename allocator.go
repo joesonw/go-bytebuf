@@ -1,4 +1,4 @@
-package go_bytebuf
+package bytebuf
 
 type AllocatorStat interface {
 	Memory() int64

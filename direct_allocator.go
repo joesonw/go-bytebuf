@@ -1,4 +1,4 @@
-package go_bytebuf
+package bytebuf
 
 import (
 	"runtime"
