@@ -5,7 +5,7 @@
 It can also mark/reset read/write indexes,
 which can be very useful in packet encoding/decoding scenario and many others.
 
-see [go-doc](https://pkg.go.dev/github.com/joesonw/go-bytebuf) for detaled usage
+see [go doc](https://pkg.go.dev/github.com/joesonw/go-bytebuf) for detaled usage
 
 > go get github.com/joesonw/go-bytebuf
 
